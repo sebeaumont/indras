@@ -55,6 +55,7 @@ determinant (LRT a b c d) = a * b - c * d
 {-# INLINABLE determinant  #-}
 
 
+-- | Make the determinant 1
 normalize :: Mobius -> Mobius
 normalize m@(LRT a b c d) =
   LRT (a * w) (b * w) (c * w)  (d * w)
@@ -128,6 +129,7 @@ classify m@(LRT a _ c _)
     r@(Fixpoints (r1, r2)) = fixpoints m
     isReal = (==0) . imagPart
 
+-- | Grandma's recipe 
 grandma :: C -> C -> (Mobius, Mobius)
 grandma ta tb = (a,b)
   where
@@ -136,3 +138,9 @@ grandma ta tb = (a,b)
     b   = LRT ((tb-2*i)/2) (tb/2) (tb/2) ((tb+2*i)/2)
     ab  = LRT (tab/2) ((tab-2)/(2*z0)) ((tab+2)*z0/2) (tab/2)
     a   = ab `mappend` inverse b
+
+-- | conjugate of t with the conjugating map s 
+conjugate :: Mobius -> Mobius -> Mobius
+conjugate s t = s <> t <> inverse s
+
+
