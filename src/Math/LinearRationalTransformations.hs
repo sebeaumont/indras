@@ -4,37 +4,49 @@
 module Math.LinearRationalTransformations where
 
 import Data.Complex
+  (Complex((:+)), conjugate, magnitude, imagPart)
 
 -- | Not sure how I want to proceed with fields
-type C = Complex Double
-type Q = Complex Rational
-type G = Complex Integer
+type CC = Complex Double
 
 -- meanwhile
 
 -- | complex unit
-i :: C
+i :: CC
 i = 0 :+ 1
+
+one :: CC
+one = 1 :+ 0
+
+zero :: CC
+zero = 0 :+ 0
+
+cinv :: CC -> CC
+cinv z = z' / (z * z')
+  where z' = conjugate z
 
 -- | Linear rational tranformations require four coefficients to give a
 -- function in `z` such that: z |-> a + bz / c + dz; here we
 -- define a type to encapsulate the parameters to the transformation.
 -- which are really a 2x2 matrix.
 
-data Mobius = LRT C C C C
-  deriving (Eq, Show)
+data Mobius = LRT CC CC CC CC
+  deriving (Eq)
 
+instance Show Mobius where
+  show (LRT a b c d) =
+    "\n| " <> show a <> ", " <> show b <> "\n| " <> show c <> ", " <> show d
 
 -- | Constructor for the transformation
-mobius :: C -> C -> C -> C -> Mobius
+mobius :: CC -> CC -> CC -> CC -> Mobius
 mobius a b c d = LRT a b c d
 
 -- | Identity transformation
-ii :: Mobius
-ii = mobius 1 0 0 1
+identity :: Mobius
+identity = mobius 1 0 0 1
 
 -- | Apply the Mobius transformation to `z`
-($$) :: Mobius -> C -> C
+($$) :: Mobius -> CC -> CC
 ($$) (LRT a b c d) z = (a * z + b) / (c * z + d)
 infixr 2 $$
 
@@ -47,36 +59,35 @@ instance Semigroup Mobius where
     (c * a' + d * c') (c * b' + d * d')
 
 instance Monoid Mobius where
-  mempty = ii -- ^ With the identity matrix
+  mempty = identity -- ^ With the identity matrix
 
 -- | Determinant of the transformation
-determinant :: Mobius -> C
+determinant :: Mobius -> CC
 determinant (LRT a b c d) = a * b - c * d
 {-# INLINABLE determinant  #-}
-
 
 -- | Make the determinant 1
 normalize :: Mobius -> Mobius
 normalize m@(LRT a b c d) =
-  LRT (a * w) (b * w) (c * w)  (d * w)
+  LRT (a * w) (b * w) (c * w) (d * w)
   where
-    w :: C
-    w = 1.0 / (sqrt $ determinant m)
+    w :: CC
+    w =  cinv . sqrt . determinant $ m
 {-# INLINABLE normalize  #-}
 
 inverse :: Mobius -> Mobius
 inverse m@(LRT a b c d) =
   LRT (d * w) (-b * w) (-c * w) (a * w)
   where
-    w :: C
-    w = 1.0 / determinant m
+    w :: CC
+    w = cinv . determinant $ m
 {-# INLINABLE inverse  #-}
 
-trace :: Mobius -> C
+trace :: Mobius -> CC
 trace (LRT a _ _ d) = a + d
 {-# INLINABLE trace  #-}
 
-multiplier :: Mobius -> C
+multiplier :: Mobius -> CC
 multiplier m@(LRT a _ c _) =
   (a - c*r1) / (a - c*r2)
   where
@@ -84,7 +95,7 @@ multiplier m@(LRT a _ c _) =
 {-# INLINABLE multiplier  #-}
 
 -- | Pairs of complex roots
-type Roots = (C,C) 
+type Roots = (CC,CC) 
 
 -- | TODO: Fixpoints can be at inf
 newtype Fixpoints = Fixpoints Roots
@@ -97,7 +108,7 @@ fixpoints (LRT a b c d) =
   
 
 -- | Find roots of quadratic: /ax^2 + bx + c/
-quadraticRoots :: C -> C -> C -> Roots
+quadraticRoots :: CC -> CC -> CC -> Roots
 quadraticRoots a b c = (r1,r2)
   where
     p2 = b / (2*a) 
@@ -130,7 +141,7 @@ classify m@(LRT a _ c _)
     isReal = (==0) . imagPart
 
 -- | Grandma's recipe 
-grandma :: C -> C -> (Mobius, Mobius)
+grandma :: CC -> CC -> (Mobius, Mobius)
 grandma ta tb = (a,b)
   where
     tab = snd $ quadraticRoots 1 (-ta*tb) (ta*ta + tb*tb)
@@ -140,7 +151,7 @@ grandma ta tb = (a,b)
     a   = ab `mappend` inverse b
 
 -- | conjugate of t with the conjugating map s 
-conjugate :: Mobius -> Mobius -> Mobius
-conjugate s t = s <> t <> inverse s
+conj :: Mobius -> Mobius -> Mobius
+conj s t = s <> t <> inverse s
 
 

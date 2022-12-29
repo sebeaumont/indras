@@ -16,8 +16,12 @@ extra-doc-files:    CHANGELOG.md
 common warnings
     ghc-options: -Wall
 
+common optimisations
+    ghc-options: -O2 -fllvm
+    
 library
     import:           warnings
+    import:           optimisations
     exposed-modules:  Math.LinearRationalTransformations
     -- other-modules:
     -- other-extensions:
@@ -27,6 +31,7 @@ library
 
 executable indras
     import:           warnings
+    import:           optimisations    
     main-is:          Main.hs
     -- other-modules:
     -- other-extensions:
@@ -34,21 +39,23 @@ executable indras
         base ^>=4.17.0.0,
         indras,
         diagrams-lib
-
     hs-source-dirs:   app
     default-language: GHC2021
-
+    
 test-suite indras-test
     import:           warnings
+    import:           optimisations
     default-language: GHC2021
     
     other-modules:    Math.ArbitraryLRT
-    -- other-extensions:
+                    , Math.ArbitraryReal
+    other-extensions: TemplateHaskell
     type:             exitcode-stdio-1.0
     hs-source-dirs:   tst
     main-is:          Main.hs
     build-depends:
-        base ^>=4.17.0.0,
-        indras,
-        QuickCheck,
-        quickcheck-instances
+                  QuickCheck >= 2.14.2,
+                  base ^>=4.17.0.0,
+                  ieee754,
+                  indras,
+                  quickcheck-instances

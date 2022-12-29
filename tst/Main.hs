@@ -1,18 +1,21 @@
-module Main (main) where
+module Main
+  (main) where
 
-import Test.QuickCheck 
-import Math.ArbitraryLRT as LRT 
-
-prop_rightIdentity :: LRT.Mobius -> Bool
-prop_rightIdentity t = t <> LRT.ii == t 
-
-prop_leftIdentity :: LRT.Mobius -> Bool
-prop_leftIdentity t = LRT.ii <> t == t 
-
--- TODO automate the runner
+import qualified Math.ArbitraryReal
+  as MAR
+import qualified Math.ArbitraryLRT
+  as MALRT
+import Control.Monad
+  (unless)
+import Test.QuickCheck
+  (isSuccess)
+import System.Exit
+  (exitFailure)
 
 main :: IO ()
 main = do
-  verboseCheck (prop_rightIdentity)
-  verboseCheck (prop_leftIdentity)
-
+  mar <- MAR.runRealTests
+  malrt <- MALRT.runTests
+  
+  unless (and [mar, malrt])
+    exitFailure
